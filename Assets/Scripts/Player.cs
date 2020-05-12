@@ -5,10 +5,18 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
+    [HideInInspector]
     public Transform m_transform;
+
     public int m_life = 5;
+    public LayerMask m_layer;
+    public Transform m_fx;
+    public AudioClip m_audio;
+    float m_shootTimer = 0;
 
     CharacterController m_ch;
+    Transform m_muzzlePoint;
+
 
     float m_movSpeed = 3f;
     float m_gravity = 2.0f;
@@ -27,6 +35,8 @@ public class Player : MonoBehaviour
         m_camTransform.rotation = m_transform.rotation;
         m_camRot = m_camTransform.eulerAngles;
 
+        m_muzzlePoint = m_camTransform.Find("M16/weapon/muzzlepoint").transform;
+
         Cursor.lockState = CursorLockMode.Locked;
 
     }
@@ -38,6 +48,38 @@ public class Player : MonoBehaviour
             return;
         }
         Control();
+
+        m_shootTimer -= Time.deltaTime;
+        if (Input.GetMouseButton(0) && m_shootTimer <= 0)
+        {
+            m_shootTimer = 0.1f;
+            GetComponent<AudioSource>().PlayOneShot(m_audio);
+            GameManager.Instance.setAmmo(1);
+
+            RaycastHit info;
+            bool hit = Physics.Raycast(m_muzzlePoint.position, m_camTransform.TransformDirection(Vector3.forward), out info, 100, m_layer);
+            if (hit)
+            {
+                if (info.transform.tag.CompareTo("Enemy") == 0)
+                {
+                    Enemy enemy = info.transform.GetComponent<Enemy>();
+                    enemy.OnDamage(1);
+                }
+
+                Instantiate(m_fx, info.point, info.transform.rotation);
+            }
+        }
+
+    }
+
+    public void OnDamage(int damage)
+    {
+        m_life -= damage;
+        GameManager.Instance.SetLife(m_life);
+        if (m_life <= 0)
+        {
+            Cursor.lockState = CursorLockMode.None;
+        }
     }
 
     private void Control()
@@ -55,10 +97,10 @@ public class Player : MonoBehaviour
         m_transform.eulerAngles = camrot;
 
         Vector3 motion = Vector3.zero;
-        
+
         motion.x = Input.GetAxis("Horizontal") * m_movSpeed * Time.deltaTime;
         motion.z = Input.GetAxis("Vertical") * m_movSpeed * Time.deltaTime;
-        
+
         motion.y -= m_gravity * Time.deltaTime;
         m_ch.Move(m_transform.TransformDirection(motion));
 

@@ -12,6 +12,7 @@ public class GameManager : MonoBehaviour
     public static int m_hiscore = 0;
 
     public int m_ammo = 100;
+    public int m_score = 0;
 
     Player m_player;
 
@@ -57,8 +58,33 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void SetScore(int score)
+    public void SetScore(int score)
     {
+        m_score += score;
+        if (m_score > m_hiscore)
+        {
+            m_hiscore = m_score;
+        }
+        txt_score.text = "Score<color=yellow>" + m_score + "</color>";
+        txt_hiscore.text = "High Score" + m_hiscore;
+    }
 
+    public void setAmmo(int ammo)
+    {
+        m_ammo -= ammo;
+        if (m_ammo <= 0)
+        {
+            m_ammo = 100 - m_ammo;
+        }
+        txt_ammo.text = m_ammo.ToString() + "/100";
+    }
+
+    public void SetLife(int life)
+    {
+        txt_life.text = life.ToString();
+        if (life <= 0)
+        {
+            button_restart.gameObject.SetActive(true);
+        }
     }
 }
